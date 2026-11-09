@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: List
+metadata: {}
+items:
+  # 1. ImageStream
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: student-attendance-tracker
+      labels:
+        app: student-attendance-tracker
+        app.kubernetes.io/part-of: student-attendance-tracker
+
+  # 2. BuildConfig (Builds image from GitHub)
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: student-attendance-tracker
+      labels:
+        app: student-attendance-tracker
+    spec:
+      source:
+        type: Git
+        git:
+          uri: https://github.com/Gopika-TA/Student_attendance_tracker.git
+          ref: main
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Dockerfile
+      output:
+        to:
+          kind: ImageStreamTag
+          name: student-attendance-tracker:latest
+      triggers:
+        - type: ConfigChange
+        - type: ImageChange
+
+  # 3. Deployment
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: student-attendance-tracker
+      labels:
+        app: student-attendance-tracker
+        app.kubernetes.io/part-of: student-attendance-tracker
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: student-attendance-tracker
+      template:
+        metadata:
+          labels:
+            app: student-attendance-tracker
+        spec:
+          containers:
+            - name: student-attendance-tracker
+              image: image-registry.openshift-image-registry.svc:5000/gopikata2028-dev/student-attendance-tracker:latest
+              imagePullPolicy: IfNotPresent
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 250m
+                  memory: 128Mi
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: 8080
+                initialDelaySeconds: 10
+                periodSeconds: 20
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: 8080
+                initialDelaySeconds: 5
+                periodSeconds: 10
+
+  # 4. Service
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: student-attendance-tracker
+      labels:
+        app: student-attendance-tracker
+    spec:
+      selector:
+        app: student-attendance-tracker
+      ports:
+        - name: 8080-tcp
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
+
+  # 5. Route (Public HTTPS URL)
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: student-attendance-tracker
+      labels:
+        app: student-attendance-tracker
+    spec:
+      to:
+        kind: Service
+        name: student-attendance-tracker
+        weight: 100
+      port:
+        targetPort: 8080-tcp
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
