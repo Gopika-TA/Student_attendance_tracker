@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Modern, responsive Student Attendance Tracker web application built with React, JavaScript, HTML5, and CSS3.">
+  <title>Student Attendance Tracker | EduTrack</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- React 18 & ReactDOM 18 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel Standalone (Compiles JSX directly in the browser) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <!-- Root React Container -->
+  <div id="root">
+    <!-- Initial Loading State while React mounts -->
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; gap: 16px; color: #4f46e5;">
+      <div style="width: 48px; height: 48px; border: 4px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <div style="font-size: 1.1rem; font-weight: 600; color: #1e293b;">Loading Student Attendance Tracker...</div>
+      <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    </div>
+  </div>
+
+  <!-- Main React Application Script (Inline to ensure 100% compatibility with file:// protocol and local servers) -->
+  <script type="text/babel">
+// ==========================================================================
+// Student Attendance Tracker - Complete React Application
+// ==========================================================================
+
+const { useState, useEffect, useMemo, useCallback } = React;
+
+// --------------------------------------------------------------------------
+// Embedded SVG Icons for 100% offline reliability & crisp rendering
+// --------------------------------------------------------------------------
+const Icons = {
+  Dashboard: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="7" height="9" x="3" y="3" rx="1" />
+      <rect width="7" height="5" x="14" y="3" rx="1" />
+      <rect width="7" height="9" x="14" y="12" rx="1" />
+      <rect width="7" height="5" x="3" y="16" rx="1" />
+    </svg>
+  ),
+  Students: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  Attendance: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 2v4" />
+      <path d="M16 2v4" />
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <path d="M3 10h18" />
+      <path d="m9 16 2 2 4-4" />
+    </svg>
+  ),
+  Reports: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" x2="18" y1="20" y2="10" />
+      <line x1="12" x2="12" y1="20" y2="4" />
+      <line x1="6" x2="6" y1="20" y2="14" />
+    </svg>
+  ),
+  GraduationCap: () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21.42 10.922a1 1 0 0 0-.019-.838L12.83 3.18a2 2 0 0 0-1.66 0L2.6 10.084a1 1 0 0 0 0 1.832l8.57 6.908a2 2 0 0 0 1.66 0l6.71-5.409" />
+      <path d="M6 12.5v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  ),
+  Search: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  ),
+  Edit: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </svg>
+  ),
+  Trash: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    </svg>
+  ),
+  Check: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
+  X: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  ),
+  Calendar: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <line x1="16" x2="16" y1="2" y2="6" />
+      <line x1="8" x2="8" y1="2" y2="6" />
+      <line x1="3" x2="21" y1="10" y2="10" />
+    </svg>
+  ),
+  Download: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  ),
+  Printer: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 6 2 18 2 18 9" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <rect width="12" height="8" x="6" y="14" />
+    </svg>
+  ),
+  UserCheck: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <polyline points="16 11 18 13 22 9" />
+    </svg>
+  ),
+  UserX: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <line x1="17" y1="8" x2="22" y2="13" />
+      <line x1="22" y1="8" x2="17" y2="13" />
+    </svg>
+  ),
+  TrendingUp: () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+      <polyline points="16 7 22 7 22 13" />
+    </svg>
+  ),
+  AlertTriangle: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+  Menu: () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  ),
+  Eye: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  Refresh: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  )
+};
+
+// --------------------------------------------------------------------------
+// Sample Initial Data for Demonstration
+// --------------------------------------------------------------------------
+const SAMPLE_STUDENTS = [
+  { id: "std-001", rollNumber: "101", name: "Aarav Sharma", grade: "Class 10-A", gender: "Male", email: "aarav.sharma@example.com", phone: "+91 98765 43210" },
+  { id: "std-002", rollNumber: "102", name: "Priya Patel", grade: "Class 10-A", gender: "Female", email: "priya.patel@example.com", phone: "+91 98765 43211" },
+  { id: "std-003", rollNumber: "103", name: "Rohan Verma", grade: "Class 10-A", gender: "Male", email: "rohan.verma@example.com", phone: "+91 98765 43212" },
+  { id: "std-004", rollNumber: "104", name: "Ananya Iyer", grade: "Class 10-A", gender: "Female", email: "ananya.iyer@example.com", phone: "+91 98765 43213" },
+  { id: "std-005", rollNumber: "105", name: "Kabir Mehta", grade: "Class 10-A", gender: "Male", email: "kabir.mehta@example.com", phone: "+91 98765 43214" },
+  { id: "std-006", rollNumber: "201", name: "Sneha Reddy", grade: "Class 10-B", gender: "Female", email: "sneha.reddy@example.com", phone: "+91 98765 43215" },
+  { id: "std-007", rollNumber: "202", name: "Aditya Nair", grade: "Class 10-B", gender: "Male", email: "aditya.nair@example.com", phone: "+91 98765 43216" },
+  { id: "std-008", rollNumber: "203", name: "Diya Chatterjee", grade: "Class 10-B", gender: "Female", email: "diya.c@example.com", phone: "+91 98765 43217" },
+  { id: "std-009", rollNumber: "204", name: "Vikram Malhotra", grade: "Class 10-B", gender: "Male", email: "vikram.m@example.com", phone: "+91 98765 43218" },
+  { id: "std-010", rollNumber: "205", name: "Meera Joshi", grade: "Class 10-B", gender: "Female", email: "meera.joshi@example.com", phone: "+91 98765 43219" }
+];
+
+const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getOffsetDateString = (offsetDays) => {
+  const d = new Date();
+  d.setDate(d.getDate() - offsetDays);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const GENERATE_SAMPLE_ATTENDANCE = () => {
+  const d0 = getTodayDateString();
+  const d1 = getOffsetDateString(1);
+  const d2 = getOffsetDateString(2);
+  const d3 = getOffsetDateString(3);
+  const d4 = getOffsetDateString(4);
+  const d5 = getOffsetDateString(5);
+  const d6 = getOffsetDateString(6);
+
+  return {
+    [d0]: {
+      "std-001": { status: "Present", remark: "" },
+      "std-002": { status: "Present", remark: "" },
+      "std-003": { status: "Absent", remark: "Viral Fever" },
+      "std-004": { status: "Present", remark: "" },
+      "std-005": { status: "Present", remark: "" },
+      "std-006": { status: "Present", remark: "" },
+      "std-007": { status: "Present", remark: "" },
+      "std-008": { status: "Present", remark: "" },
+      "std-009": { status: "Absent", remark: "Family Function" },
+      "std-010": { status: "Present", remark: "" }
+    },
+    [d1]: {
+      "std-001": { status: "Present", remark: "" },
+      "std-002": { status: "Present", remark: "" },
+      "std-003": { status: "Absent", remark: "Sick leave" },
+      "std-004": { status: "Present", remark: "" },
+      "std-005": { status: "Present", remark: "" },
+      "std-006": { status: "Present", remark: "" },
+      "std-007": { status: "Absent", remark: "Dentist visit" },
+      "std-008": { status: "Present", remark: "" },
+      "std-009": { status: "Present", remark: "" },
+      "std-010": { status: "Present", remark: "" }
+    },
+    [d2]: {
+      "std-001": { status: "Present", remark: "" },
+      "std-002": { status: "Present", remark: "" },
+      "std-003": { status: "Absent", remark: "" },
+      "std-004": { status: "Present", remark: "" },
+      "std-005": { status: "Present", remark: "" },
+      "std-006": { status: "Present", remark: "" },
+      "std-007": { status: "Present", remark: "" },
+      "std-008": { status: "Present", remark: "" },
+      "std-009": { status: "Absent", remark: "" },
+      "std-010": { status: "Present", remark: "" }
+    },
+    [d3]: {
+      "std-001": { status: "Present", remark: "" },
+      "std-002": { status: "Present", remark: "" },
+      "std-003": { status: "Present", remark: "" },
+      "std-004": { status: "Present", remark: "" },
+      "std-005": { status: "Absent", remark: "Sports competition" },
+      "std-006": { status: "Present", remark: "" },
+      "std-007": { status: "Present", remark: "" },
+      "std-008": { status: "Present", remark: "" },
+      "std-009": { status: "Absent", remark: "" },
+      "std-010": { status: "Present", remark: "" }
+    },
+    [d4]: {
+      "std-001": { status: "Present", remark: "" },
+      "std-002": { status: "Absent", remark: "Personal" },
+      "std-003": { status: "Present", remark: "" },
+      "std-004": { status: "Present", remark: "" },
+      "std-005": { status: "Present", remark: "" },
+      "std-006": { status: "Present", remark: "" },
+      "std-007": { status: "Absent", remark: "" },
+      "std-008": { status: "Present", remark: "" },
+      "std-009": { status: "Present", remark: "" },
+      "std-010": { status: "Present", remark: "" }
+    },
+    [d5]: {
+      "std-001": { status: "Present", remark: "" },
+      "std-002": { status: "Present", remark: "" },
+      "std-003": { status: "Present", remark: "" },
+      "std-004": { status: "Present", remark: "" },
+      "std-005": { status: "Present", remark: "" },
+      "std-006": { status: "Present", remark: "" },
+      "std-007": { status: "Present", remark: "" },
+      "std-008": { status: "Absent", remark: "" },
+      "std-009": { status: "Present", remark: "" },
+      "std-010": { status: "Present", remark: "" }
+    },
+    [d6]: {
+      "std-001": { status: "Present", remark: "" },
+      "std-002": { status: "Present", remark: "" },
+      "std-003": { status: "Present", remark: "" },
+      "std-004": { status: "Present", remark: "" },
+      "std-005": { status: "Present", remark: "" },
+      "std-006": { status: "Present", remark: "" },
+      "std-007": { status: "Present", remark: "" },
+      "std-008": { status: "Present", remark: "" },
+      "std-009": { status: "Present", remark: "" },
+      "std-010": { status: "Present", remark: "" }
+    }
+  };
+};
+
+const STORAGE_KEYS = {
+  STUDENTS: "sat_students_v2",
+  ATTENDANCE: "sat_attendance_v2"
+};
+
+// --------------------------------------------------------------------------
+// Helper: Format friendly date
+// --------------------------------------------------------------------------
+function formatFriendlyDate(dateStr) {
+  if (!dateStr) return "";
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// --------------------------------------------------------------------------
+// Helper: Calculate attendance stats for a student
+// --------------------------------------------------------------------------
+function calculateStudentStats(studentId, attendanceData) {
+  let presentDays = 0;
+  let absentDays = 0;
+
+  Object.keys(attendanceData).forEach((dateKey) => {
+    const dayRecord = attendanceData[dateKey];
+    if (dayRecord && dayRecord[studentId]) {
+      const status = typeof dayRecord[studentId] === 'object' ? dayRecord[studentId].status : dayRecord[studentId];
+      if (status === 'Present') presentDays++;
+      else if (status === 'Absent') absentDays++;
+    }
+  });
+
+  const totalRecorded = presentDays + absentDays;
+  const percentage = totalRecorded > 0 ? ((presentDays / totalRecorded) * 100).toFixed(1) : "0.0";
+
+  let statusCategory = "Excellent";
+  let statusColor = "fill-excellent";
+  const numPercent = parseFloat(percentage);
+
+  if (totalRecorded === 0) {
+    statusCategory = "No Records";
+    statusColor = "fill-good";
+  } else if (numPercent >= 85) {
+    statusCategory = "Excellent";
+    statusColor = "fill-excellent";
+  } else if (numPercent >= 75) {
+    statusCategory = "Good";
+    statusColor = "fill-good";
+  } else if (numPercent >= 65) {
+    statusCategory = "Warning";
+    statusColor = "fill-warning";
+  } else {
+    statusCategory = "Critical";
+    statusColor = "fill-danger";
+  }
+
+  return {
+    totalRecorded,
+    presentDays,
+    absentDays,
+    percentage: parseFloat(percentage),
+    statusCategory,
+    statusColor
+  };
+}
+
+// ==========================================================================
+// Component: Sidebar
+// ==========================================================================
+function Sidebar({ currentTab, setCurrentTab, studentCount, mobileOpen, setMobileOpen, onResetDemo }) {
+  const navItems = [
+    { id: "dashboard", label: "Dashboard", icon: <Icons.Dashboard /> },
+    { id: "students", label: "Students", icon: <Icons.Students />, badge: studentCount },
+    { id: "attendance", label: "Attendance", icon: <Icons.Attendance /> },
+    { id: "reports", label: "Reports", icon: <Icons.Reports /> }
+  ];
+
+  return (
+    <React.Fragment>
+      <div 
+        className={`sidebar-backdrop ${mobileOpen ? 'mobile-open' : ''}`}
+        onClick={() => setMobileOpen(false)}
+      />
+      <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-brand">
+          <div className="brand-icon-wrapper">
+            <Icons.GraduationCap />
+          </div>
+          <div className="brand-text">
+            <h1>AttendTrack</h1>
+            <span>School Portal</span>
+          </div>
+        </div>
+
+        <nav className="sidebar-nav">
+          <div className="nav-section-title">Navigation</div>
+          {navItems.map((item) => {
+            const isActive = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentTab(item.id);
+                  setMobileOpen(false);
+                }}
+              >
+                <div className="nav-item-left">
+                  {item.icon}
+                  <span>{item.label}</span>
+                </div>
+                {item.badge !== undefined && (
+                  <span className="nav-badge">{item.badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="system-status-card">
+            <div className="status-header">
+              <span className="status-indicator-dot"></span>
+              <span>Local Database Active</span>
+            </div>
+            <div className="status-desc">
+              All records safely stored in localStorage.
+            </div>
+            <button 
+              onClick={onResetDemo}
+              className="btn-secondary" 
+              style={{ width: '100%', marginTop: '10px', padding: '6px 10px', fontSize: '0.78rem', justifyContent: 'center' }}
+              title="Reset students and sample attendance"
+            >
+              <Icons.Refresh /> Reset Demo Data
+            </button>
+          </div>
+        </div>
+      </aside>
+    </React.Fragment>
+  );
+}
+
+// ==========================================================================
+// Component: Top Header
+// ==========================================================================
+function Header({ currentTab, setMobileOpen, onOpenAddStudent, setCurrentTab }) {
+  const getHeaderInfo = () => {
+    switch (currentTab) {
+      case "dashboard":
+        return { title: "Dashboard Overview", subtitle: "Real-time attendance insights & key classroom metrics" };
+      case "students":
+        return { title: "Student Directory", subtitle: "Manage enrolled students, profiles, and contact details" };
+      case "attendance":
+        return { title: "Mark Attendance", subtitle: "Select a date and record classroom attendance status" };
+      case "reports":
+        return { title: "Attendance Reports", subtitle: "Performance analytics, percentage tracking & student reports" };
+      default:
+        return { title: "Attendance Tracker", subtitle: "Manage your class attendance" };
+    }
+  };
+
+  const { title, subtitle } = getHeaderInfo();
+  const todayFormatted = formatFriendlyDate(getTodayDateString());
+
+  return (
+    <header className="top-header">
+      <div className="header-left">
+        <button className="mobile-menu-btn" onClick={() => setMobileOpen(true)} title="Open Menu">
+          <Icons.Menu />
+        </button>
+        <div className="page-titles">
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
+        </div>
+      </div>
+
+      <div className="header-right">
+        <div className="date-badge">
+          <Icons.Calendar />
+          <span>{todayFormatted}</span>
+        </div>
+
+        {currentTab === 'students' ? (
+          <button className="quick-action-btn" onClick={onOpenAddStudent}>
+            <Icons.Plus />
+            <span>Add Student</span>
+          </button>
+        ) : (
+          <button 
+            className="quick-action-btn" 
+            onClick={() => setCurrentTab('attendance')}
+            title="Mark today's attendance"
+          >
+            <Icons.Attendance />
+            <span>Mark Today</span>
+          </button>
+        )}
+      </div>
+    </header>
+  );
+}
+
+// ==========================================================================
+// Component: Dashboard
+// ==========================================================================
+function Dashboard({ students, attendanceData, setCurrentTab, onOpenAddStudent }) {
+  const todayStr = getTodayDateString();
+  const todayRecords = attendanceData[todayStr] || {};
+
+  // Calculate today's stats
+  const totalStudents = students.length;
+  let presentToday = 0;
+  let absentToday = 0;
+
+  students.forEach((std) => {
+    const record = todayRecords[std.id];
+    const status = typeof record === 'object' ? record?.status : record;
+    if (status === 'Present') presentToday++;
+    else if (status === 'Absent') absentToday++;
+  });
+
+  const markedToday = presentToday + absentToday;
+  const attendanceRateToday = markedToday > 0 ? ((presentToday / markedToday) * 100).toFixed(1) : "0.0";
+
+  // Calculate class-wise stats
+  const classBreakdown = useMemo(() => {
+    const map = {};
+    students.forEach((std) => {
+      const cls = std.grade || "Unassigned";
+      if (!map[cls]) {
+        map[cls] = { total: 0, present: 0, absent: 0 };
+      }
+      map[cls].total++;
+      const record = todayRecords[std.id];
+      const status = typeof record === 'object' ? record?.status : record;
+      if (status === 'Present') map[cls].present++;
+      else if (status === 'Absent') map[cls].absent++;
+    });
+
+    return Object.keys(map).map((clsName) => {
+      const data = map[clsName];
+      const marked = data.present + data.absent;
+      const rate = marked > 0 ? Math.round((data.present / marked) * 100) : 0;
+      return {
+        className: clsName,
+        total: data.total,
+        present: data.present,
+        absent: data.absent,
+        rate
+      };
+    });
+  }, [students, todayRecords]);
+
+  // Students with low overall attendance (< 75%)
+  const lowAttendanceStudents = useMemo(() => {
+    return students
+      .map((std) => {
+        const stats = calculateStudentStats(std.id, attendanceData);
+        return { ...std, stats };
+      })
+      .filter((std) => std.stats.totalRecorded > 0 && std.stats.percentage < 75)
+      .sort((a, b) => a.stats.percentage - b.stats.percentage);
+  }, [students, attendanceData]);
+
+  // Recent attendance history for past 5 dates
+  const recentDays = useMemo(() => {
+    const dates = Object.keys(attendanceData)
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, 5);
+
+    return dates.map((dateKey) => {
+      const dayRec = attendanceData[dateKey] || {};
+      let pCount = 0;
+      let aCount = 0;
+      students.forEach((std) => {
+        const rec = dayRec[std.id];
+        const status = typeof rec === 'object' ? rec?.status : rec;
+        if (status === 'Present') pCount++;
+        else if (status === 'Absent') aCount++;
+      });
+      const total = pCount + aCount;
+      const rate = total > 0 ? ((pCount / total) * 100).toFixed(0) : "0";
+      return {
+        date: dateKey,
+        friendlyDate: formatFriendlyDate(dateKey),
+        present: pCount,
+        absent: aCount,
+        rate
+      };
+    });
+  }, [attendanceData, students]);
+
+  return (
+    <div className="dashboard-content">
+      {/* Welcome Banner */}
+      <div className="dashboard-welcome">
+        <div className="welcome-text">
+          <h3>Welcome to AttendTrack Portal 👋</h3>
+          <p>
+            Track daily classroom attendance, monitor student consistency, and generate detailed percentage reports with ease.
+          </p>
+        </div>
+        <div className="welcome-actions">
+          <button className="btn-welcome-light" onClick={() => setCurrentTab('attendance')}>
+            <Icons.Check />
+            <span>Mark Today's Attendance</span>
+          </button>
+          <button className="btn-welcome-outline" onClick={onOpenAddStudent}>
+            <Icons.Plus />
+            <span>Add Student</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 4 Metric Cards */}
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <div className="metric-info">
+            <span className="metric-label">Total Students</span>
+            <span className="metric-value">{totalStudents}</span>
+            <span className="metric-sub">
+              <span>Enrolled in directory</span>
+            </span>
+          </div>
+          <div className="metric-icon-box icon-blue">
+            <Icons.Students />
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-info">
+            <span className="metric-label">Present Today</span>
+            <span className="metric-value" style={{ color: 'var(--success)' }}>{presentToday}</span>
+            <span className="metric-sub">
+              <span style={{ color: 'var(--success)', fontWeight: 600 }}>Active in classes</span>
+            </span>
+          </div>
+          <div className="metric-icon-box icon-green">
+            <Icons.UserCheck />
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-info">
+            <span className="metric-label">Absent Today</span>
+            <span className="metric-value" style={{ color: 'var(--danger)' }}>{absentToday}</span>
+            <span className="metric-sub">
+              <span style={{ color: 'var(--danger)', fontWeight: 600 }}>Marked absent</span>
+            </span>
+          </div>
+          <div className="metric-icon-box icon-red">
+            <Icons.UserX />
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-info">
+            <span className="metric-label">Attendance Rate</span>
+            <span className="metric-value">{attendanceRateToday}%</span>
+            <span className="metric-sub">
+              <span>Today's ratio ({presentToday}/{markedToday || totalStudents})</span>
+            </span>
+          </div>
+          <div className="metric-icon-box icon-purple">
+            <Icons.TrendingUp />
+          </div>
+        </div>
+      </div>
+
+      {/* Middle Two-Column Grid */}
+      <div className="dashboard-grid-two-col">
+        {/* Visual Ratio & Class Stats */}
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <h4>Today's Attendance Overview</h4>
+              <p>Visual status distribution for {formatFriendlyDate(todayStr)}</p>
+            </div>
+            <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => setCurrentTab('attendance')}>
+              View Sheet
+            </button>
+          </div>
+          <div className="card-body">
+            <div className="visual-progress-section">
+              <div className="progress-bar-container">
+                <div 
+                  className="progress-bar-fill-present"
+                  style={{ width: `${Math.max(parseFloat(attendanceRateToday), 5)}%` }}
+                >
+                  {attendanceRateToday}%
+                </div>
+              </div>
+              <div className="progress-legend">
+                <div className="legend-item">
+                  <span className="legend-color-dot dot-green"></span>
+                  <span>Present: {presentToday} students</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color-dot dot-red"></span>
+                  <span>Absent: {absentToday} students</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '24px' }}>
+              <h5 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text-main)' }}>
+                Class Breakdown
+              </h5>
+              <div className="class-stat-list">
+                {classBreakdown.map((item) => (
+                  <div key={item.className} className="class-stat-row">
+                    <div>
+                      <div className="class-stat-name">{item.className}</div>
+                      <div className="class-stat-count">{item.present} Present / {item.absent} Absent ({item.total} total)</div>
+                    </div>
+                    <span className={`class-rate-badge ${item.rate >= 80 ? 'rate-high' : item.rate >= 70 ? 'rate-medium' : 'rate-low'}`}>
+                      {item.rate}% Present
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Low Attendance Alert Card */}
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'var(--danger)' }}><Icons.AlertTriangle /></span>
+                <span>Low Attendance Alert</span>
+              </h4>
+              <p>Students with overall rate below 75%</p>
+            </div>
+          </div>
+          <div className="card-body">
+            {lowAttendanceStudents.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--success)' }}>
+                <Icons.Check />
+                <p style={{ marginTop: '8px', fontSize: '0.9rem', fontWeight: 600 }}>All students are above 75% attendance!</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Great consistency across classes.</p>
+              </div>
+            ) : (
+              <div className="alert-student-list">
+                {lowAttendanceStudents.map((std) => (
+                  <div key={std.id} className="alert-student-item">
+                    <div className="alert-student-info">
+                      <div className="alert-student-avatar">
+                        {std.name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="alert-student-name">{std.name}</div>
+                        <div className="alert-student-meta">Roll #{std.rollNumber} • {std.grade}</div>
+                      </div>
+                    </div>
+                    <div className="alert-rate-tag">
+                      {std.stats.percentage}%
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button 
+              className="btn-secondary" 
+              style={{ width: '100%', marginTop: '16px', justifyContent: 'center' }}
+              onClick={() => setCurrentTab('reports')}
+            >
+              Open Full Attendance Reports
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity Log */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title-group">
+            <h4>Recent Attendance Logs</h4>
+            <p>Summary of past recorded school days</p>
+          </div>
+          <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => setCurrentTab('attendance')}>
+            Open Attendance Book
+          </button>
+        </div>
+        <div className="table-responsive">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Present Count</th>
+                <th>Absent Count</th>
+                <th>Overall Rate</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentDays.map((row) => (
+                <tr key={row.date}>
+                  <td>
+                    <strong>{row.friendlyDate}</strong>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{row.date}</div>
+                  </td>
+                  <td>
+                    <span className="badge badge-present">{row.present} Present</span>
+                  </td>
+                  <td>
+                    <span className="badge badge-absent">{row.absent} Absent</span>
+                  </td>
+                  <td>
+                    <strong>{row.rate}%</strong>
+                  </td>
+                  <td>
+                    <span className={`class-rate-badge ${parseInt(row.rate) >= 80 ? 'rate-high' : 'rate-medium'}`}>
+                      {parseInt(row.rate) >= 80 ? 'Normal Attendance' : 'Lower Turnout'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Component: Students Page
+// ==========================================================================
+function Students({ students, attendanceData, onAddStudent, onEditStudent, onDeleteStudent, onViewStudent }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClass, setSelectedClass] = useState("ALL");
+
+  // Get unique classes
+  const classes = useMemo(() => {
+    const list = Array.from(new Set(students.map((s) => s.grade || "Unassigned")));
+    list.sort();
+    return list;
+  }, [students]);
+
+  // Filter students based on search and class filter
+  const filteredStudents = useMemo(() => {
+    return students.filter((std) => {
+      const matchSearch = 
+        std.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        std.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (std.email && std.email.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchClass = selectedClass === "ALL" || std.grade === selectedClass;
+      return matchSearch && matchClass;
+    });
+  }, [students, searchTerm, selectedClass]);
+
+  return (
+    <div className="students-content">
+      {/* Search & Actions Toolbar */}
+      <div className="page-toolbar">
+        <div className="search-filter-group">
+          <div className="search-box">
+            <span className="search-icon-inside"><Icons.Search /></span>
+            <input
+              type="text"
+              placeholder="Search by student name, roll number..."
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="filter-select"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+          >
+            <option value="ALL">All Classes ({students.length})</option>
+            {classes.map((cls) => (
+              <option key={cls} value={cls}>{cls}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="toolbar-actions">
+          <button className="btn-primary" onClick={onAddStudent}>
+            <Icons.Plus />
+            <span>Add Student</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Students Data Table */}
+      {filteredStudents.length === 0 ? (
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-icon-wrapper">
+              <Icons.Students />
+            </div>
+            <h4>No Students Found</h4>
+            <p>
+              {searchTerm || selectedClass !== "ALL"
+                ? "No students match your search criteria. Try clearing the search filter."
+                : "Your student roster is currently empty. Click below to add your first student."}
+            </p>
+            {searchTerm || selectedClass !== "ALL" ? (
+              <button 
+                className="btn-secondary" 
+                onClick={() => { setSearchTerm(""); setSelectedClass("ALL"); }}
+              >
+                Clear Search
+              </button>
+            ) : (
+              <button className="btn-primary" onClick={onAddStudent}>
+                <Icons.Plus /> Add First Student
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="table-responsive">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Roll No</th>
+                <th>Class / Grade</th>
+                <th>Contact Info</th>
+                <th>Attendance</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map((std) => {
+                const stats = calculateStudentStats(std.id, attendanceData);
+                return (
+                  <tr key={std.id}>
+                    <td>
+                      <div className="student-meta-cell">
+                        <div className="student-avatar">
+                          {std.name.charAt(0)}
+                        </div>
+                        <div>
+                          <span className="student-name-text">{std.name}</span>
+                          <span className="student-id-text">{std.gender || "Student"}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>#{std.rollNumber}</strong>
+                    </td>
+                    <td>
+                      <span className="badge badge-class">{std.grade}</span>
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '0.82rem' }}>
+                        <div>{std.email || "No email"}</div>
+                        <div style={{ color: 'var(--text-muted)' }}>{std.phone || "No phone"}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="report-table-progress">
+                        <div className="table-progress-bar">
+                          <div
+                            className={`table-progress-fill ${stats.statusColor}`}
+                            style={{ width: `${Math.max(stats.percentage, 5)}%` }}
+                          />
+                        </div>
+                        <span className="percentage-text">{stats.percentage}%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="action-buttons" style={{ justifyContent: 'flex-end' }}>
+                        <button 
+                          className="btn-icon-action" 
+                          onClick={() => onViewStudent(std)}
+                          title="View Attendance History"
+                        >
+                          <Icons.Eye />
+                        </button>
+                        <button 
+                          className="btn-icon-action" 
+                          onClick={() => onEditStudent(std)}
+                          title="Edit Student"
+                        >
+                          <Icons.Edit />
+                        </button>
+                        <button 
+                          className="btn-icon-action delete" 
+                          onClick={() => onDeleteStudent(std)}
+                          title="Delete Student"
+                        >
+                          <Icons.Trash />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================================================
+// Component: Attendance Page
+// ==========================================================================
+function Attendance({ students, attendanceData, onSaveAttendance, showToast }) {
+  const [selectedDate, setSelectedDate] = useState(getTodayDateString());
+  const [selectedClass, setSelectedClass] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Get current day records from props
+  const dateRecord = attendanceData[selectedDate] || {};
+
+  // Get unique classes
+  const classes = useMemo(() => {
+    const list = Array.from(new Set(students.map((s) => s.grade || "Unassigned")));
+    list.sort();
+    return list;
+  }, [students]);
+
+  // Filter students for the table
+  const displayedStudents = useMemo(() => {
+    return students.filter((std) => {
+      const matchSearch =
+        std.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        std.rollNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchClass = selectedClass === "ALL" || std.grade === selectedClass;
+      return matchSearch && matchClass;
+    });
+  }, [students, searchTerm, selectedClass]);
+
+  // Stats for the chosen date
+  const dateStats = useMemo(() => {
+    let present = 0;
+    let absent = 0;
+    let unmarked = 0;
+
+    students.forEach((std) => {
+      const rec = dateRecord[std.id];
+      const status = typeof rec === 'object' ? rec?.status : rec;
+      if (status === 'Present') present++;
+      else if (status === 'Absent') absent++;
+      else unmarked++;
+    });
+
+    const total = students.length;
+    const marked = present + absent;
+    const rate = marked > 0 ? ((present / marked) * 100).toFixed(1) : "0.0";
+
+    return { total, present, absent, unmarked, rate };
+  }, [students, dateRecord]);
+
+  // Handle single student status toggle
+  const handleToggleStatus = (studentId, newStatus) => {
+    const existing = dateRecord[studentId];
+    const oldRemark = typeof existing === 'object' ? existing?.remark || "" : "";
+
+    const updatedDateRecords = {
+      ...dateRecord,
+      [studentId]: {
+        status: newStatus,
+        remark: oldRemark
+      }
+    };
+
+    onSaveAttendance(selectedDate, updatedDateRecords);
+  };
+
+  // Handle remark change
+  const handleRemarkChange = (studentId, remarkText) => {
+    const existing = dateRecord[studentId];
+    const currentStatus = typeof existing === 'object' ? existing?.status : existing || 'Present';
+
+    const updatedDateRecords = {
+      ...dateRecord,
+      [studentId]: {
+        status: currentStatus,
+        remark: remarkText
+      }
+    };
+
+    onSaveAttendance(selectedDate, updatedDateRecords);
+  };
+
+  // Bulk: Mark All Present
+  const handleMarkAllPresent = () => {
+    const updated = { ...dateRecord };
+    displayedStudents.forEach((std) => {
+      const existing = updated[std.id];
+      const remark = typeof existing === 'object' ? existing?.remark || "" : "";
+      updated[std.id] = { status: "Present", remark };
+    });
+    onSaveAttendance(selectedDate, updated);
+    showToast(`Marked ${displayedStudents.length} students Present for ${selectedDate}`, 'success');
+  };
+
+  // Bulk: Mark All Absent
+  const handleMarkAllAbsent = () => {
+    const updated = { ...dateRecord };
+    displayedStudents.forEach((std) => {
+      const existing = updated[std.id];
+      const remark = typeof existing === 'object' ? existing?.remark || "" : "";
+      updated[std.id] = { status: "Absent", remark };
+    });
+    onSaveAttendance(selectedDate, updated);
+    showToast(`Marked ${displayedStudents.length} students Absent for ${selectedDate}`, 'danger');
+  };
+
+  // Date steppers
+  const handleStepDay = (step) => {
+    const parts = selectedDate.split('-');
+    const cur = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    cur.setDate(cur.getDate() + step);
+    const yr = cur.getFullYear();
+    const mo = String(cur.getMonth() + 1).padStart(2, '0');
+    const da = String(cur.getDate()).padStart(2, '0');
+    setSelectedDate(`${yr}-${mo}-${da}`);
+  };
+
+  return (
+    <div className="attendance-content">
+      {/* Date Control Panel */}
+      <div className="attendance-control-panel">
+        <div className="attendance-date-row">
+          <div className="date-picker-group">
+            <span className="date-label">Attendance Date:</span>
+            <input
+              type="date"
+              className="date-input"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+            <button 
+              className={`btn-date-nav ${selectedDate === getTodayDateString() ? 'active' : ''}`}
+              onClick={() => setSelectedDate(getTodayDateString())}
+            >
+              Today
+            </button>
+            <button 
+              className="btn-date-nav"
+              onClick={() => handleStepDay(-1)}
+              title="Previous Day"
+            >
+              ◀ Prev
+            </button>
+            <button 
+              className="btn-date-nav"
+              onClick={() => handleStepDay(1)}
+              title="Next Day"
+            >
+              Next ▶
+            </button>
+            <span style={{ fontWeight: 600, color: 'var(--text-main)', marginLeft: '6px' }}>
+              {formatFriendlyDate(selectedDate)}
+            </span>
+          </div>
+
+          <div className="bulk-actions-group">
+            <button className="btn-bulk-present" onClick={handleMarkAllPresent}>
+              <Icons.Check />
+              <span>Mark All Present</span>
+            </button>
+            <button className="btn-bulk-absent" onClick={handleMarkAllAbsent}>
+              <Icons.X />
+              <span>Mark All Absent</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Date Statistics Bar */}
+        <div className="attendance-summary-bar">
+          <div className="summary-stat-box">
+            <span className="summary-stat-label">Total Students</span>
+            <span className="summary-stat-val">{dateStats.total}</span>
+          </div>
+          <div className="summary-stat-box">
+            <span className="summary-stat-label">Present</span>
+            <span className="summary-stat-val val-green">{dateStats.present}</span>
+          </div>
+          <div className="summary-stat-box">
+            <span className="summary-stat-label">Absent</span>
+            <span className="summary-stat-val val-red">{dateStats.absent}</span>
+          </div>
+          <div className="summary-stat-box">
+            <span className="summary-stat-label">Attendance Rate</span>
+            <span className="summary-stat-val val-purple">{dateStats.rate}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="page-toolbar">
+        <div className="search-filter-group">
+          <div className="search-box">
+            <span className="search-icon-inside"><Icons.Search /></span>
+            <input
+              type="text"
+              placeholder="Filter student list..."
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="filter-select"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+          >
+            <option value="ALL">All Classes</option>
+            {classes.map((cls) => (
+              <option key={cls} value={cls}>{cls}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          Changes are auto-saved to localStorage
+        </div>
+      </div>
+
+      {/* Attendance Sheet Table */}
+      <div className="attendance-table-container">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Roll No</th>
+              <th>Class</th>
+              <th>Mark Attendance</th>
+              <th>Remark / Notes (Optional)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayedStudents.map((std) => {
+              const record = dateRecord[std.id];
+              const status = typeof record === 'object' ? record?.status : record;
+              const remark = typeof record === 'object' ? record?.remark || "" : "";
+
+              return (
+                <tr key={std.id}>
+                  <td>
+                    <div className="student-meta-cell">
+                      <div className="student-avatar">{std.name.charAt(0)}</div>
+                      <span className="student-name-text">{std.name}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <strong>#{std.rollNumber}</strong>
+                  </td>
+                  <td>
+                    <span className="badge badge-class">{std.grade}</span>
+                  </td>
+                  <td>
+                    <div className="attendance-toggle-group">
+                      <button
+                        className={`btn-toggle-status ${status === 'Present' ? 'active-present' : ''}`}
+                        onClick={() => handleToggleStatus(std.id, 'Present')}
+                      >
+                        <Icons.Check />
+                        <span>Present</span>
+                      </button>
+                      <button
+                        className={`btn-toggle-status ${status === 'Absent' ? 'active-absent' : ''}`}
+                        onClick={() => handleToggleStatus(std.id, 'Absent')}
+                      >
+                        <Icons.X />
+                        <span>Absent</span>
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      className="notes-input"
+                      placeholder="e.g. Fever, Sports..."
+                      value={remark}
+                      onChange={(e) => handleRemarkChange(std.id, e.target.value)}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Component: Reports Page
+// ==========================================================================
+function Reports({ students, attendanceData, onViewStudent }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClass, setSelectedClass] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
+  // Calculate statistics for each student
+  const studentReports = useMemo(() => {
+    return students.map((std) => {
+      const stats = calculateStudentStats(std.id, attendanceData);
+      return {
+        ...std,
+        ...stats
+      };
+    });
+  }, [students, attendanceData]);
+
+  // Overall aggregate metrics
+  const aggregateMetrics = useMemo(() => {
+    let totalPercents = 0;
+    let studentsCount = 0;
+    let highCount = 0;
+    let lowCount = 0;
+
+    studentReports.forEach((s) => {
+      if (s.totalRecorded > 0) {
+        totalPercents += s.percentage;
+        studentsCount++;
+        if (s.percentage >= 85) highCount++;
+        else if (s.percentage < 75) lowCount++;
+      }
+    });
+
+    const averageRate = studentsCount > 0 ? (totalPercents / studentsCount).toFixed(1) : "0.0";
+    return { averageRate, highCount, lowCount, totalStudents: students.length };
+  }, [studentReports, students]);
+
+  // Filter list
+  const filteredReports = useMemo(() => {
+    return studentReports.filter((item) => {
+      const matchSearch =
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.rollNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchClass = selectedClass === "ALL" || item.grade === selectedClass;
+      let matchStatus = true;
+      if (statusFilter === "EXCELLENT") matchStatus = item.percentage >= 85;
+      else if (statusFilter === "GOOD") matchStatus = item.percentage >= 75 && item.percentage < 85;
+      else if (statusFilter === "WARNING") matchStatus = item.percentage < 75;
+
+      return matchSearch && matchClass && matchStatus;
+    });
+  }, [studentReports, searchTerm, selectedClass, statusFilter]);
+
+  // Classes list
+  const classes = useMemo(() => {
+    const list = Array.from(new Set(students.map((s) => s.grade || "Unassigned")));
+    list.sort();
+    return list;
+  }, [students]);
+
+  // CSV Export feature
+  const exportToCSV = () => {
+    const headers = ["Roll Number", "Student Name", "Class", "Total Recorded Days", "Days Present", "Days Absent", "Attendance %", "Status"];
+    const rows = filteredReports.map((r) => [
+      r.rollNumber,
+      `"${r.name}"`,
+      `"${r.grade}"`,
+      r.totalRecorded,
+      r.presentDays,
+      r.absentDays,
+      `${r.percentage}%`,
+      r.statusCategory
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Attendance_Report_${getTodayDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Print Report feature
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="reports-content">
+      {/* 3 Summary Cards */}
+      <div className="report-overview-cards">
+        <div className="report-summary-card">
+          <div className="report-summary-icon icon-blue">
+            <Icons.TrendingUp />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>CLASSROOM AVERAGE</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{aggregateMetrics.averageRate}%</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Across all recorded sessions</div>
+          </div>
+        </div>
+
+        <div className="report-summary-card">
+          <div className="report-summary-icon icon-green">
+            <Icons.UserCheck />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>EXCELLENT (≥85%)</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--success)' }}>{aggregateMetrics.highCount}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>High consistency students</div>
+          </div>
+        </div>
+
+        <div className="report-summary-card">
+          <div className="report-summary-icon icon-red">
+            <Icons.AlertTriangle />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>NEEDS ATTENTION (&lt;75%)</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--danger)' }}>{aggregateMetrics.lowCount}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Below attendance threshold</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar Filters & Export Buttons */}
+      <div className="page-toolbar">
+        <div className="search-filter-group">
+          <div className="search-box">
+            <span className="search-icon-inside"><Icons.Search /></span>
+            <input
+              type="text"
+              placeholder="Search reports by student name, roll #..."
+              className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="filter-select"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+          >
+            <option value="ALL">All Classes</option>
+            {classes.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="ALL">All Categories</option>
+            <option value="EXCELLENT">Excellent (≥85%)</option>
+            <option value="GOOD">Good (75%-84%)</option>
+            <option value="WARNING">Needs Attention (&lt;75%)</option>
+          </select>
+        </div>
+
+        <div className="toolbar-actions">
+          <button className="btn-secondary" onClick={exportToCSV}>
+            <Icons.Download />
+            <span>Export CSV</span>
+          </button>
+          <button className="btn-secondary" onClick={handlePrint}>
+            <Icons.Printer />
+            <span>Print Report</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Detailed Reports Table */}
+      <div className="table-responsive">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Roll #</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Working Days</th>
+              <th>Days Present</th>
+              <th>Days Absent</th>
+              <th>Attendance %</th>
+              <th>Status Category</th>
+              <th style={{ textAlign: 'right' }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredReports.map((item) => (
+              <tr key={item.id}>
+                <td><strong>#{item.rollNumber}</strong></td>
+                <td>
+                  <div className="student-meta-cell">
+                    <div className="student-avatar">{item.name.charAt(0)}</div>
+                    <span className="student-name-text">{item.name}</span>
+                  </div>
+                </td>
+                <td><span className="badge badge-class">{item.grade}</span></td>
+                <td>{item.totalRecorded} days</td>
+                <td><strong style={{ color: 'var(--success)' }}>{item.presentDays}</strong></td>
+                <td><strong style={{ color: 'var(--danger)' }}>{item.absentDays}</strong></td>
+                <td>
+                  <div className="report-table-progress">
+                    <div className="table-progress-bar">
+                      <div
+                        className={`table-progress-fill ${item.statusColor}`}
+                        style={{ width: `${Math.max(item.percentage, 5)}%` }}
+                      />
+                    </div>
+                    <span className="percentage-text">{item.percentage}%</span>
+                  </div>
+                </td>
+                <td>
+                  <span className={`class-rate-badge ${item.percentage >= 85 ? 'rate-high' : item.percentage >= 75 ? 'rate-medium' : 'rate-low'}`}>
+                    {item.statusCategory}
+                  </span>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <button 
+                    className="btn-icon-action"
+                    onClick={() => onViewStudent(item)}
+                    title="View Log History"
+                  >
+                    <Icons.Eye />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Component: Student Modal (Add / Edit)
+// ==========================================================================
+function StudentModal({ isOpen, onClose, onSave, studentToEdit, existingStudents }) {
+  if (!isOpen) return null;
+
+  const isEdit = Boolean(studentToEdit);
+  const [name, setName] = useState(studentToEdit?.name || "");
+  const [rollNumber, setRollNumber] = useState(studentToEdit?.rollNumber || "");
+  const [grade, setGrade] = useState(studentToEdit?.grade || "Class 10-A");
+  const [gender, setGender] = useState(studentToEdit?.gender || "Male");
+  const [email, setEmail] = useState(studentToEdit?.email || "");
+  const [phone, setPhone] = useState(studentToEdit?.phone || "");
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!name.trim()) {
+      setError("Please enter the student's full name.");
+      return;
+    }
+    if (!rollNumber.trim()) {
+      setError("Please enter a valid roll number.");
+      return;
+    }
+
+    // Check roll number uniqueness
+    const duplicate = existingStudents.find(
+      (s) => s.rollNumber.trim().toLowerCase() === rollNumber.trim().toLowerCase() && s.id !== studentToEdit?.id
+    );
+    if (duplicate) {
+      setError(`Roll number #${rollNumber} is already assigned to ${duplicate.name}.`);
+      return;
+    }
+
+    const payload = {
+      id: studentToEdit?.id || `std-${Date.now()}`,
+      name: name.trim(),
+      rollNumber: rollNumber.trim(),
+      grade: grade.trim(),
+      gender,
+      email: email.trim(),
+      phone: phone.trim()
+    };
+
+    onSave(payload);
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>{isEdit ? "Edit Student Details" : "Add New Student"}</h3>
+          <button className="btn-modal-close" onClick={onClose}>
+            <Icons.X />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-form">
+          {error && <div className="form-error-text" style={{ padding: '8px 12px', backgroundColor: '#fee2e2', borderRadius: '6px' }}>{error}</div>}
+
+          <div className="form-row-two">
+            <div className="form-group">
+              <label className="form-label">Full Name *</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. Rahul Sharma"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Roll Number *</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. 106"
+                value={rollNumber}
+                onChange={(e) => setRollNumber(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="form-row-two">
+            <div className="form-group">
+              <label className="form-label">Class / Section</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. Class 10-A"
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Gender</label>
+              <select className="form-select" value={gender} onChange={(e) => setGender(e.target.value)}>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email Address (Optional)</label>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="e.g. rahul@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Guardian Phone Number (Optional)</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g. +91 98765 00000"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+
+          <div className="modal-footer" style={{ margin: '16px -24px -24px -24px' }}>
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              <Icons.Check />
+              <span>{isEdit ? "Save Changes" : "Create Student"}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Component: Student Profile & History Modal
+// ==========================================================================
+function StudentDetailsModal({ student, attendanceData, onClose }) {
+  if (!student) return null;
+
+  const stats = calculateStudentStats(student.id, attendanceData);
+
+  // Collect history
+  const history = Object.keys(attendanceData)
+    .sort((a, b) => b.localeCompare(a))
+    .filter((d) => attendanceData[d] && attendanceData[d][student.id])
+    .map((dateKey) => {
+      const rec = attendanceData[dateKey][student.id];
+      const status = typeof rec === 'object' ? rec?.status : rec;
+      const remark = typeof rec === 'object' ? rec?.remark : "";
+      return {
+        date: dateKey,
+        friendlyDate: formatFriendlyDate(dateKey),
+        status,
+        remark
+      };
+    });
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="student-avatar" style={{ width: '42px', height: '42px', fontSize: '1.1rem' }}>
+              {student.name.charAt(0)}
+            </div>
+            <div>
+              <h3>{student.name}</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Roll #{student.rollNumber} • {student.grade}</p>
+            </div>
+          </div>
+          <button className="btn-modal-close" onClick={onClose}><Icons.X /></button>
+        </div>
+
+        <div style={{ padding: '24px' }}>
+          {/* Summary Metric Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ backgroundColor: 'var(--bg-app)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>TOTAL DAYS</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{stats.totalRecorded}</div>
+            </div>
+            <div style={{ backgroundColor: 'var(--success-light)', padding: '12px', borderRadius: '8px', textAlign: 'center', color: 'var(--success-hover)' }}>
+              <div style={{ fontSize: '0.75rem' }}>PRESENT</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{stats.presentDays}</div>
+            </div>
+            <div style={{ backgroundColor: 'var(--danger-light)', padding: '12px', borderRadius: '8px', textAlign: 'center', color: 'var(--danger-hover)' }}>
+              <div style={{ fontSize: '0.75rem' }}>ABSENT</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{stats.absentDays}</div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+              <span>Attendance Consistency</span>
+              <span>{stats.percentage}% ({stats.statusCategory})</span>
+            </div>
+            <div className="table-progress-bar" style={{ height: '10px' }}>
+              <div className={`table-progress-fill ${stats.statusColor}`} style={{ width: `${Math.max(stats.percentage, 5)}%` }} />
+            </div>
+          </div>
+
+          {/* Past History Table */}
+          <h5 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '10px' }}>Attendance Log History</h5>
+          <div style={{ maxHeight: '240px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+            {history.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                No attendance recorded yet for this student.
+              </div>
+            ) : (
+              <table className="data-table" style={{ fontSize: '0.85rem' }}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((h) => (
+                    <tr key={h.date}>
+                      <td>{h.friendlyDate}</td>
+                      <td>
+                        <span className={`badge ${h.status === 'Present' ? 'badge-present' : 'badge-absent'}`}>
+                          {h.status}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)' }}>{h.remark || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Component: Delete Confirmation Modal
+// ==========================================================================
+function DeleteConfirmModal({ student, onConfirm, onCancel }) {
+  if (!student) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-card" style={{ maxWidth: '440px' }} onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 style={{ color: 'var(--danger)' }}>Confirm Deletion</h3>
+          <button className="btn-modal-close" onClick={onCancel}><Icons.X /></button>
+        </div>
+        <div style={{ padding: '24px' }}>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '8px' }}>
+            Are you sure you want to remove <strong>{student.name}</strong> (Roll #{student.rollNumber})?
+          </p>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+            This will permanently remove the student profile from your records.
+          </p>
+        </div>
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onCancel}>Cancel</button>
+          <button className="btn-primary" style={{ backgroundColor: 'var(--danger)' }} onClick={onConfirm}>
+            <Icons.Trash /> Delete Student
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================================================
+// Component: Toast Notification Banner
+// ==========================================================================
+function ToastContainer({ toasts, removeToast }) {
+  return (
+    <div className="toast-container">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`toast toast-${toast.type || 'info'}`} onClick={() => removeToast(toast.id)}>
+          <span>{toast.message}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ==========================================================================
+// Main Root Application
+// ==========================================================================
+function App() {
+  const [currentTab, setCurrentTab] = useState("dashboard");
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Student list state initialized from localStorage
+  const [students, setStudents] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.STUDENTS);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error("Failed to load students from localStorage", e);
+    }
+    return SAMPLE_STUDENTS;
+  });
+
+  // Attendance records state initialized from localStorage
+  const [attendanceData, setAttendanceData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ATTENDANCE);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error("Failed to load attendance from localStorage", e);
+    }
+    return GENERATE_SAMPLE_ATTENDANCE();
+  });
+
+  // Modals state
+  const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
+  const [studentToEdit, setStudentToEdit] = useState(null);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [studentToView, setStudentToView] = useState(null);
+
+  // Toast notifications state
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = "info") => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3200);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // Save students to localStorage whenever state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
+    } catch (e) {
+      console.error("Error saving students to localStorage", e);
+    }
+  }, [students]);
+
+  // Save attendance to localStorage whenever state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(attendanceData));
+    } catch (e) {
+      console.error("Error saving attendance to localStorage", e);
+    }
+  }, [attendanceData]);
+
+  // Add or Update student handler
+  const handleSaveStudent = (studentData) => {
+    if (studentToEdit) {
+      // Edit existing
+      setStudents((prev) => prev.map((s) => (s.id === studentData.id ? studentData : s)));
+      showToast(`Updated profile for ${studentData.name}`, 'success');
+    } else {
+      // Add new
+      setStudents((prev) => [studentData, ...prev]);
+      showToast(`Added new student: ${studentData.name}`, 'success');
+    }
+    setStudentToEdit(null);
+  };
+
+  // Delete student handler
+  const handleConfirmDelete = () => {
+    if (!studentToDelete) return;
+    const name = studentToDelete.name;
+    setStudents((prev) => prev.filter((s) => s.id !== studentToDelete.id));
+    setStudentToDelete(null);
+    showToast(`Removed student ${name} from roster`, 'danger');
+  };
+
+  // Save single date attendance records
+  const handleSaveAttendance = (dateKey, updatedDateRecords) => {
+    setAttendanceData((prev) => ({
+      ...prev,
+      [dateKey]: updatedDateRecords
+    }));
+  };
+
+  // Reset to initial demo data
+  const handleResetDemo = () => {
+    if (window.confirm("Reset all data to default demo students and sample attendance records?")) {
+      setStudents(SAMPLE_STUDENTS);
+      setAttendanceData(GENERATE_SAMPLE_ATTENDANCE());
+      showToast("Restored demo students and sample attendance history!", "info");
+    }
+  };
+
+  return (
+    <div className="app-container">
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      {/* Sidebar Navigation */}
+      <Sidebar
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        studentCount={students.length}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        onResetDemo={handleResetDemo}
+      />
+
+      {/* Main Content Area */}
+      <div className="main-wrapper">
+        <Header
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+          setMobileOpen={setMobileOpen}
+          onOpenAddStudent={() => {
+            setStudentToEdit(null);
+            setIsAddEditModalOpen(true);
+          }}
+        />
+
+        <main className="content-body">
+          {currentTab === 'dashboard' && (
+            <Dashboard
+              students={students}
+              attendanceData={attendanceData}
+              setCurrentTab={setCurrentTab}
+              onOpenAddStudent={() => {
+                setStudentToEdit(null);
+                setIsAddEditModalOpen(true);
+              }}
+            />
+          )}
+
+          {currentTab === 'students' && (
+            <Students
+              students={students}
+              attendanceData={attendanceData}
+              onAddStudent={() => {
+                setStudentToEdit(null);
+                setIsAddEditModalOpen(true);
+              }}
+              onEditStudent={(std) => {
+                setStudentToEdit(std);
+                setIsAddEditModalOpen(true);
+              }}
+              onDeleteStudent={(std) => setStudentToDelete(std)}
+              onViewStudent={(std) => setStudentToView(std)}
+            />
+          )}
+
+          {currentTab === 'attendance' && (
+            <Attendance
+              students={students}
+              attendanceData={attendanceData}
+              onSaveAttendance={handleSaveAttendance}
+              showToast={showToast}
+            />
+          )}
+
+          {currentTab === 'reports' && (
+            <Reports
+              students={students}
+              attendanceData={attendanceData}
+              onViewStudent={(std) => setStudentToView(std)}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Add / Edit Student Modal */}
+      <StudentModal
+        isOpen={isAddEditModalOpen}
+        studentToEdit={studentToEdit}
+        existingStudents={students}
+        onClose={() => {
+          setIsAddEditModalOpen(false);
+          setStudentToEdit(null);
+        }}
+        onSave={handleSaveStudent}
+      />
+
+      {/* Student Details / Profile View Modal */}
+      <StudentDetailsModal
+        student={studentToView}
+        attendanceData={attendanceData}
+        onClose={() => setStudentToView(null)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        student={studentToDelete}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setStudentToDelete(null)}
+      />
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Mount React 18 Application
+// --------------------------------------------------------------------------
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(<App />);
+}
+  </script>
+</body>
+</html>
+
